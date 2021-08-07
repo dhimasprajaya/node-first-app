@@ -9,7 +9,8 @@ const User = require('../models/user');
 const transporter = nodemailer.createTransport(
   sendgridTransport({
     auth: {
-      api_key: 'apikey',
+      api_key:
+        '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',
     },
   })
 );
@@ -151,6 +152,7 @@ exports.postReset = (req, res, next) => {
         return user.save();
       })
       .then((result) => {
+        res.redirect('/');
         // transporter.sendMail({
         //   to: email,
         //   from: 'no-reply@test.cdom',
@@ -160,9 +162,7 @@ exports.postReset = (req, res, next) => {
         //   <p>Click this <a href="http://localhost:3000/reset/${token}">link</a> to set a new password</a></p>
         //   `,
         // });
-        console.log(
-          `Click this http://localhost:3000/reset/${token}" to set a new password`
-        );
+        console.log(`URL => http://localhost:3000/reset/${token}`);
       })
       .catch((err) => {
         console.log(err);
@@ -172,10 +172,7 @@ exports.postReset = (req, res, next) => {
 
 exports.getNewPassword = (req, res, next) => {
   const token = req.params.token;
-  User.findOne({
-    resetToken: token,
-    resetTokenExpiration: { $gt: Date.now() },
-  })
+  User.findOne({ resetToken: token, resetTokenExpiration: { $gt: Date.now() } })
     .then((user) => {
       let message = req.flash('error');
       if (message.length > 0) {
@@ -191,7 +188,9 @@ exports.getNewPassword = (req, res, next) => {
         passwordToken: token,
       });
     })
-    .catch((err) => console.log(err));
+    .catch((err) => {
+      console.log(err);
+    });
 };
 
 exports.postNewPassword = (req, res, next) => {
@@ -211,7 +210,7 @@ exports.postNewPassword = (req, res, next) => {
     })
     .then((hashedPassword) => {
       resetUser.password = hashedPassword;
-      resetUser.resetToken = null;
+      resetUser.resetToken = undefined;
       resetUser.resetTokenExpiration = undefined;
       return resetUser.save();
     })
