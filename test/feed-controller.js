@@ -3,9 +3,9 @@ const sinon = require('sinon');
 const mongoose = require('mongoose');
 
 const User = require('../models/user');
-const AuthController = require('../controllers/auth');
+const FeedController = require('../controllers/feed');
 
-describe('Auth Controller', function () {
+describe('Feed Controller', function () {
   before(function (done) {
     mongoose
       .connect(
@@ -34,42 +34,27 @@ describe('Auth Controller', function () {
 
   afterEach(function () {});
 
-  it('should throw an error with code 500 if accessing the database fails', function (done) {
-    sinon.stub(User, 'findOne');
-    User.findOne.throws();
-
+  it('should add a created post to the posts of the creator', function (done) {
     const req = {
       body: {
-        email: 'test@test.com',
-        password: 'tester',
+        title: 'Test Post',
+        content: 'A Test Post',
       },
+      file: {
+        path: 'abc',
+      },
+      userId: '6110d4d74a21b61533fd380e',
     };
-
-    AuthController.login(req, {}, () => {}).then((result) => {
-      expect(result).to.be.an('error');
-      expect(result).to.have.property('statusCode', 500);
-      done();
-    });
-
-    User.findOne.restore();
-  });
-
-  it('should send a response with a valid user status for an existing user', function (done) {
-    const req = { userId: '6110d4d74a21b61533fd380e' };
     const res = {
-      statusCode: 500,
-      userStatus: null,
-      status: function (code) {
-        this.statusCode = code;
+      status: function () {
         return this;
       },
-      json: function (data) {
-        this.userStatus = data.status;
-      },
+      json: function () {},
     };
-    AuthController.getUserStatus(req, res, () => {}).then(() => {
-      expect(res.statusCode).to.be.equal(200);
-      expect(res.userStatus).to.be.equal('I am new!');
+
+    FeedController.createPost(req, res, () => {}).then((savedUser) => {
+      expect(savedUser).to.have.property('posts');
+      expect(savedUser.posts).to.have.length(1);
       done();
     });
   });
